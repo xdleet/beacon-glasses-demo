@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Play Services version code from play-services-basement
+         GooglePlayServicesUtilLight.GOOGLE_PLAY_SERVICES_VERSION_CODE.
+         Required by Play Services: without the com.google.android.gms.version
+         meta-data in the manifest, Wearable client creation fails with
+         ApiException 10 / GooglePlayServicesMissingManifestValueException. -->
+    <integer name="google_play_services_version">12451000</integer>
+</resources>
