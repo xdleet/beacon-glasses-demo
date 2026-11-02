@@ -1,0 +1,5 @@
+# Already present in ~/local-tools/venv on the Zorin box; listed for a fresh venv.
+fastapi
+uvicorn
+httpx
+pydantic
