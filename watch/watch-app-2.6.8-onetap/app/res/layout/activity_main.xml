@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Round-watch layout, v2.6.1 fix for the 2.6 overflow bug.
+     2.6 BUG (Alan, Oct 30, after a watch restart): the main screen showed
+     Type a message / SEND / MIC / WEB CHAT / SETTINGS / DEMO ANSWER at the
+     very bottom edge of the round screen, with NO "Ask Muse (glasses)"
+     trigger row, NO "One-tap Ask Muse" row, and NO NINJA-TEK.US brand.
+     The button WAS in the built APK (dex + layout both contain
+     btn_onetap) — it was clipped off, not missing.
+     ROOT CAUSE: the 2.6 layout was a fixed vertical LinearLayout with a
+     weight-1 transcript ScrollView and a wrap_content button drawer.
+     Fixed height alone was ~240dp of 40dp button rows (input + Send/Mic
+     + Web/Settings + Demo + Trigger + One-tap) plus model label, brand,
+     and 16dp padding — more than the Pixel Watch 3's usable round-screen
+     height. The weight-1 transcript therefore collapsed to near-zero
+     (only partial top text visible in Alan's screenshot) and every row
+     below DEMO ANSWER fell off the circle. The 2.6 note claiming the
+     extra row "only shrinks the transcript" was wrong.
+     2.6.1 FIX (all three, belt and braces):
+       1. The WHOLE screen is one outer ScrollView, so every row is
+          reachable by swiping down — no row can be clipped off again.
+          The transcript is a plain TextView inside that scroll (no
+          nested ScrollView), so there is no scroll-in-scroll fight.
+       2. One-tap is FIRST in the drawer, directly under the input, so
+          it is visible on the first screen without any scrolling.
+       3. Button heights 40dp -> 36dp and outer padding 16dp -> 12dp,
+          saving ~28dp of fixed height.
+     PRESERVED: tap-the-transcript to hide/show the whole drawer
+     (drawer GONE/VISIBLE still works, it is still a plain LinearLayout
+     inside the outer scroll). MainActivity's auto-scroll was updated:
+     it now scrolls to the transcript's bottom instead of fullScroll
+     DOWN, which would have jumped past the transcript to the brand.
+     The ninja mark sits behind everything as a clearly visible
+     background graphic (30% opacity, gently pulsing). -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <ImageView
+        android:id="@+id/ninja_bg"
+        android:layout_width="220dp"
+        android:layout_height="220dp"
+        android:layout_gravity="center"
+        android:src="@drawable/ic_launcher"
+        android:alpha="0.30"
+        android:scaleType="fitCenter" />
+
+    <ScrollView
+        android:id="@+id/scroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:id="@+id/model_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Model: Spark"
+                android:textSize="12sp"
+                android:textColor="#AAAAAA"
+                android:paddingBottom="2dp" />
+
+            <TextView
+                android:id="@+id/transcript"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="#FFFFFF"
+                android:padding="4dp" />
+
+            <!-- Button drawer: tap the transcript to hide/show this whole section. -->
+            <LinearLayout
+                android:id="@+id/drawer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <EditText
+                    android:id="@+id/input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Type a message…"
+                    android:textSize="15sp"
+                    android:textColor="#FFFFFF"
+                    android:textColorHint="#888888"
+                    android:minHeight="36dp" />
+
+                <!-- One-tap row (v2.6, moved FIRST in v2.6.1): one tap sends
+                     the preset question on /beacon/one_tap; the phone owns
+                     session + preview + snap + Ask + stop, and the answer
+                     lands on the Demo screen. First in the drawer so it is
+                     visible without scrolling. -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btn_onetap"
+                        android:layout_width="match_parent"
+                        android:layout_height="36dp"
+                        android:text="One-tap Ask Muse"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btn_send"
+                        android:layout_width="0dp"
+                        android:layout_height="36dp"
+                        android:layout_weight="1"
+                        android:text="Send"
+                        android:textSize="14sp" />
+
+                    <Button
+                        android:id="@+id/btn_mic"
+                        android:layout_width="0dp"
+                        android:layout_height="36dp"
+                        android:layout_weight="1"
+                        android:text="Mic"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <!-- Settings row (v2.6.1): Web Chat REMOVED at Alan's
+                     direction Oct 30 ("it's broken anyway" — WebView
+                     inflation failure since Oct 27, never proven fixed).
+                     Settings is now full-width in this row. Note: Web Chat
+                     shared this row with Settings, so removing it frees
+                     no row height — the scrollable drawer fix above is
+                     still what makes One-tap reachable. WebChatActivity
+                     itself is left in the app, unused, not deleted. -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btn_settings"
+                        android:layout_width="match_parent"
+                        android:layout_height="36dp"
+                        android:text="Settings"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <!-- Demo row (v2.4): latest Muse answer relayed from the phone. -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btn_demo"
+                        android:layout_width="match_parent"
+                        android:layout_height="36dp"
+                        android:text="Demo answer"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <!-- Trigger row (v2.5): one tap asks the phone to capture the
+                     current glasses frame and run Ask Muse with the preset
+                     question. No voice input, no typed question on this path. -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btn_trigger"
+                        android:layout_width="match_parent"
+                        android:layout_height="36dp"
+                        android:text="Ask Muse (glasses)"
+                        android:textSize="14sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/brand"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="NINJA-TEK.US"
+                android:textSize="11sp"
+                android:textColor="#888888"
+                android:gravity="center"
+                android:paddingTop="4dp" />
+
+            <!-- Version label (v2.6.4, at Alan's Oct 30 request so he can
+                 tell which build is opening): directly below the brand,
+                 OUTSIDE the hide/show drawer above, so it stays visible
+                 even when the drawer is hidden by tapping the transcript.
+                 Text is set from BuildConfig in MainActivity, never
+                 hardcoded here or there. -->
+            <TextView
+                android:id="@+id/version_label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="11sp"
+                android:textColor="#888888"
+                android:gravity="center"
+                android:paddingTop="2dp" />
+        </LinearLayout>
+    </ScrollView>
+</FrameLayout>
