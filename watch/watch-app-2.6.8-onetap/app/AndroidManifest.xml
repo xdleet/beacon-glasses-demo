@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="us.ninjatek.beacon"
+    android:versionCode="18"
+    android:versionName="2.6.8-onetap">
+
+    <uses-sdk android:minSdkVersion="30" android:targetSdkVersion="34" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- For the tap-to-view demo-answer card (runtime grant on API 33+,
+         requested on first open of the Demo screen). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-feature android:name="android.hardware.type.watch" android:required="true" />
+
+    <application
+        android:label="Beacon"
+        android:icon="@drawable/ic_launcher"
+        android:allowBackup="false"
+        android:theme="@android:style/Theme.DeviceDefault">
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+        <activity
+            android:name=".SplashActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".MainActivity"
+            android:exported="false" />
+        <activity
+            android:name=".WebChatActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".DemoAnswerActivity"
+            android:exported="false" />
+        <!-- Data Layer receiver: the phone companion app sends demo answers
+             here over the phone↔watch link. No WebView, no network, no key.
+             v2.6 diagnosis note (Oct 30): Google Play Services routes Data
+             Layer messages ONLY between apps whose package name AND signing
+             certificate both match across devices. This watch app is
+             us.ninjatek.beacon; if the phone app ships under a different
+             package (e.g. us.ninjatek.beacon.glasses) or a different cert,
+             NO message on any path here is ever delivered — while phone
+             notifications still bridge via Wear OS, which is exactly the
+             "notification arrives, Demo screen stays empty" symptom. The
+             fix for that half is on the phone track (align package +
+             cert); this service can only receive once that holds.
+             Filter: MESSAGE_RECEIVED with pathPrefix /beacon/ (the
+             documented fine-grained filter) plus BIND_LISTENER as a
+             second filter for older Play Services behaviour — either
+             action binds WearableListenerService (verified in the
+             bundled wearable.jar bytecode). -->
+        <service
+            android:name=".DemoListenerService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <data android:scheme="wear" android:host="*" android:pathPrefix="/beacon/" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.BIND_LISTENER" />
+            </intent-filter>
+        </service>
+    </application>
+</manifest>
